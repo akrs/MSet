@@ -1,5 +1,6 @@
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Arrays;
 
 /**
     An MSet is an unordered collection that allows duplicates. This class should be 
@@ -8,9 +9,21 @@ import java.util.Iterator;
 
 public class MSet extends Object implements Collection {
 
+    private Object[] items;
+
+    private long[] numberOfItems;
+
+    private int numberOfUniqueItems;
+
+    public static void main (String[] args) {
+        MSet m = new MSet();
+    }
     /** Constructs an MSet with no elements. */
     public MSet () {
-        throw new UnsupportedOperationException();
+        this.items = new Object[1024];
+        this.numberOfItems = new long[1024];
+        this.numberOfUniqueItems = 0;
+        Arrays.fill(this.numberOfItems, 0);
     }
 
     /** Constructs an MSet from the given collection. */
