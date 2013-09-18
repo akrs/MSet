@@ -15,9 +15,6 @@ public class MSet extends Object implements Collection {
 
     private int numberOfUniqueItems;
 
-    public static void main (String[] args) {
-        MSet m = new MSet();
-    }
     /** Constructs an MSet with no elements. */
     public MSet () {
         this.items = new Object[1024];
