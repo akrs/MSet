@@ -9,51 +9,34 @@ import java.util.Arrays;
 
 public class MSet extends Object implements Collection {
 
-    private int length;
+    private Object[] items;
 
-    private Object[] storage;
+    private long[] numberOfItems;
 
-    private long[] numberOfObjects;
-
-    private boolean[] full;
+    private int numberOfUniqueItems;
 
     /** Constructs an MSet with no elements. */
     public MSet () {
-        this.length = 10;                                   // Sets size of collection storage arrays
-        this.storage = new Object[this.length];             // Sets up storage array
-        this.numberOfObjects = new long[this.length];       // Sets up numberOfObjects array
-        Arrays.fill(this.numberOfObjects, 0);               // Fills numberOfObjects, as there's nothing there yet
-        this.full = new boolean[this.length];               // Sets up "vacency" array
-        Arrays.fill(this.full, false);
-    }
-
-    private void MSet (int size) {
-        this.length = size;
-        this.storage = new Object[this.length];
-        this.numberOfObjects = new long[this.length];
-        Arrays.fill(this.numberOfObjects, 0);
-        this.full = new boolean[this.length];
-        Arrays.fill(this.full, false);
+        this.items = new Object[1024];
+        this.numberOfItems = new long[1024];
+        this.numberOfUniqueItems = 0;
+        Arrays.fill(this.numberOfItems, 0);
     }
 
     /** Constructs an MSet from the given collection. */
     public MSet ( Collection c ) {
-        this.length = c.size();
-        this.storage = new Object[this.length];
-        this.numberOfObjects = new long[this.length];
-        Arrays.fill(this.numberOfObjects, 0);
-        this.full = new boolean[this.length];
-        Arrays.fill(this.full, false);
+        this.items = new Object[1024];
+        this.numberOfItems = new long[1024];
+        this.numberOfUniqueItems = 0;
+        Arrays.fill(this.numberOfItems, 0);
 
         this.addAll(c);
     }
 
     /** Grows the current MSet to the specified size */
     private void embiggen (int newSize) {
-        this.length = newSize;
-        this.storage = Arrays.copyOf(this.storage, newSize);
-        this.numberOfObjects = Arrays.copyOf(this.numberOfObjects, newSize);
-        this.full = Arrays.copyOf(this.full, newSize);
+        this.items = Arrays.copyOf(this.items, newSize);
+        this.numberOfItems = Arrays.copyOf(this.numberOfItems, newSize);
     }
 
     /** Ensures that this collection contains the specified element. 
@@ -92,7 +75,16 @@ public class MSet extends Object implements Collection {
 
     /** Returns a hash code value for this collection. May override Object.hashCode(). */
     public int hashCode () {
-        throw new UnsupportedOperationException();
+        long combinedHash = 0;
+        
+        for (int i = 0; i < this.items.length; i++) {
+            String tempHash = this.items[i].hashCode() + this.numberOfItems[i] + "";
+            combinedHash += tempHash.hashCode();
+        }
+
+        String hash = combinedHash + "";
+
+        return hash.hashCode();
     }
 
     /** Returns true if this collection contains no elements. */
