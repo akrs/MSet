@@ -17,7 +17,7 @@ public class MSet extends Object implements Collection {
 
     /** Constructs an MSet with no elements. */
     public MSet () {
-        this.items = new Object[1024];
+        this.items = new Object[1024];          // Inital capacty 1024 items
         this.numberOfItems = new long[1024];
         this.numberOfUniqueItems = 0;
         Arrays.fill(this.numberOfItems, 0);
@@ -25,7 +25,7 @@ public class MSet extends Object implements Collection {
 
     /** Constructs an MSet from the given collection. */
     public MSet ( Collection c ) {
-        this.items = new Object[1024];
+        this.items = new Object[1024];          // Inital capacty 1024 items
         this.numberOfItems = new long[1024];
         this.numberOfUniqueItems = 0;
         Arrays.fill(this.numberOfItems, 0);
@@ -38,7 +38,7 @@ public class MSet extends Object implements Collection {
         this.items = Arrays.copyOf(this.items, newSize);
         this.numberOfItems = Arrays.copyOf(this.numberOfItems, newSize);
 
-        System.gc();
+        System.gc();        // Embiggen will orphan large arrays, want them cleaned.
     }
 
     /** Ensures that this collection contains the specified element. 
@@ -46,17 +46,59 @@ public class MSet extends Object implements Collection {
         false if this collection does not permit duplicates and already contains the specified 
         element.) */
     public boolean add ( Object o ) {
-        throw new UnsupportedOperationException();
+        if (this.containsAndAdd(o)) {                                   // If the item is in the MSet, it will be added by this method
+            return true;
+        }
+
+        if (numberOfUniqueItems == this.items.length + 1) {             // Better make sure we have space.
+            if (this.numberOfUniqueItems * 2 < Integer.MAX_VALUE) { 
+                this.embiggen(this.numberOfUniqueItems * 2);
+            } else {
+                return false;                                           // Return false if we can't add it. TODO: Should we throw an exception?
+            }
+        }
+
+        for (int i = 0; i < this.items.length; i++) {                   // At this point, we know the MSet does not contain the item, it needs to be added.
+            if (this.items[i] == null) {
+                this.items[i] = o;
+                this.numberOfItems[i] += 1;
+                return true;
+            }
+        }
+
+        return false;                                                   // This should never happen, but the complier complains if it is removed.
+    }
+
+    /** Checks to see if the MSet contains the specified item. If it does,
+        this will return true and increment the number of the item by 1. If this
+        MSet does not conten the object, returns false*/
+    private boolean containsAndAdd ( Object o ) {
+        for (int i = 0; i < this.items.length; i++) {
+            if (o == this.items[i]) {
+                this.numberOfItems[i]++;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Adds all of the elements in the specified collection to this collection. */
     public boolean addAll ( Collection c ) {
-        throw new UnsupportedOperationException();
+        for (Object o : c) {
+            this.add(o);
+        }
+
+        return true;
     }
 
     /** Removes all of the elements from this collection. */
     public void clear () {
-        throw new UnsupportedOperationException();
+        this.items = new Object[1024];          // Just make a new MSet
+        this.numberOfItems = new long[1024];
+        this.numberOfUniqueItems = 0;
+        Arrays.fill(this.numberOfItems, 0);
+        System.gc();                            // Hopefully clean up all the orphaned items.
     }
 
     /** Returns true if this collection contains the specified element. */
@@ -76,7 +118,7 @@ public class MSet extends Object implements Collection {
     }
 
     /** Returns a hash code value for this collection. May override Object.hashCode(). */
-    public int hashCode () {
+    public int hashCode () {            // Needs moar comments
         long combinedHash = 0;
         
         for (int i = 0; i < numberOfUniqueItems; i++) {
