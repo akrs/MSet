@@ -37,6 +37,8 @@ public class MSet extends Object implements Collection {
     private void embiggen (int newSize) {
         this.items = Arrays.copyOf(this.items, newSize);
         this.numberOfItems = Arrays.copyOf(this.numberOfItems, newSize);
+
+        System.gc();
     }
 
     /** Ensures that this collection contains the specified element. 
@@ -77,7 +79,7 @@ public class MSet extends Object implements Collection {
     public int hashCode () {
         long combinedHash = 0;
         
-        for (int i = 0; i < this.items.length; i++) {
+        for (int i = 0; i < numberOfUniqueItems; i++) {
             String tempHash = this.items[i].hashCode() + this.numberOfItems[i] + "";
             combinedHash += tempHash.hashCode();
         }
