@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class MSet extends Object implements Collection {
 
-    private Object[] items;
+    private Object[][] items;
 
     private long[] numberOfItems;
 
@@ -28,7 +28,9 @@ public class MSet extends Object implements Collection {
 
     /** Constructs an MSet from the given collection. */
     public MSet ( Collection c ) {
-        throw new UnsupportedOperationException();
+        MSet newMset = new MSet();
+        newMset.addAll(c);
+        // throw new UnsupportedOperationException();
     }
 
     /** Ensures that this collection contains the specified element. 
@@ -36,6 +38,9 @@ public class MSet extends Object implements Collection {
         false if this collection does not permit duplicates and already contains the specified 
         element.) */
     public boolean add ( Object o ) {
+        if (this.contains(o)) {
+
+        }
         throw new UnsupportedOperationException();
     }
 
@@ -51,7 +56,15 @@ public class MSet extends Object implements Collection {
 
     /** Returns true if this collection contains the specified element. */
     public boolean contains ( Object o ) {
-        throw new UnsupportedOperationException();
+        for (int itemsIndex = 0; i <= this.items.length; itemsIndex++) {
+            if (o = this.items[itemsIndex]) {
+                return true;
+            } 
+        }
+        
+        return false;
+
+        // throw new UnsupportedOperationException();
     }
 
 
@@ -72,6 +85,7 @@ public class MSet extends Object implements Collection {
 
     /** Returns true if this collection contains no elements. */
     public boolean isEmpty () {
+        
         throw new UnsupportedOperationException();
     }
 

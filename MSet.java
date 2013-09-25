@@ -9,23 +9,32 @@ import java.util.Arrays;
 
 public class MSet extends Object implements Collection {
 
-    private Object[] items;
+    private Object[][] items;
 
-    private long[] numberOfItems;
+    private long[][] numberOfItems;
 
     private int numberOfUniqueItems;
 
     /** Constructs an MSet with no elements. */
     public MSet () {
-        this.items = new Object[1024];
-        this.numberOfItems = new long[1024];
+        this.items = new Object[Integer.MAX_VALUE/1024][];
+        this.items[0] = new Object[1024];
+        this.numberOfItems = new long[Integer.MAX_VALUE/1024][];
+        this.numberOfItems[0] = new long[1024];
         this.numberOfUniqueItems = 0;
-        Arrays.fill(this.numberOfItems, 0);
+        Arrays.fill(this.numberOfItems[0], 0);
     }
 
     /** Constructs an MSet from the given collection. */
     public MSet ( Collection c ) {
-        throw new UnsupportedOperationException();
+        this.items = new Object[Integer.MAX_VALUE/1024][];
+        this.items[0] = new Object[1024];
+        this.numberOfItems = new long[Integer.MAX_VALUE/1024][];
+        this.numberOfItems[0] = new long[1024];
+        this.numberOfUniqueItems = 0;
+        Arrays.fill(this.numberOfItems[0], 0);
+
+        this.addAll(c);
     }
 
     /** Ensures that this collection contains the specified element. 
