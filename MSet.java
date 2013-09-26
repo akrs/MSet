@@ -15,6 +15,8 @@ public class MSet extends Object implements Collection {
 
     private int numberOfUniqueItems;
 
+    private int[] firstEmpty;
+
     /** Constructs an MSet with no elements. */
     public MSet () {
         this.items = new Object[Integer.MAX_VALUE/1024][];
@@ -23,6 +25,8 @@ public class MSet extends Object implements Collection {
         this.numberOfItems[0] = new long[1024];
         this.numberOfUniqueItems = 0;
         Arrays.fill(this.numberOfItems[0], 0);
+        this.firstEmpty = new int[2];
+        Arrays.fill(this.firstEmpty, 0);
     }
 
     /** Constructs an MSet from the given collection. */
@@ -33,8 +37,40 @@ public class MSet extends Object implements Collection {
         this.numberOfItems[0] = new long[1024];
         this.numberOfUniqueItems = 0;
         Arrays.fill(this.numberOfItems[0], 0);
+        this.firstEmpty = new int[2];
+        Arrays.fill(this.firstEmpty, -1);
 
         this.addAll(c);
+    }
+
+    /** Private custom methods */
+    private void updateEmpty (int column, int row) {
+        if (this.firstEmpty[0] == -1) {
+            this.firstEmpty[0] = column;
+            this.firstEmpty[1] = row;
+        } else if (column < this.firstEmpty[0] || (this.firstEmpty[0] == column && row < this.firstEmpty[0])) {
+            this.firstEmpty[0] = column;
+            this.firstEmpty[1] = row;
+        }
+    }
+
+    private boolean ifContainsUpdateNumberOfItems (Object o) {
+        boolean updatedEmpty = false;
+        for (int column = 0; this.items[column] != null; column++) {
+            for (int row = 0; row < 1024; row++) {
+                if (updatedEmpty == false && this.items[column][row] == null) {
+                    updateEmpty(column, row);
+                    updatedEmpty = true;
+                }
+
+                if (o.equals(this.items[column][row])) {
+                    this.numberOfItems[column][row]++;
+                    return true;
+                } 
+            }
+        }
+
+        return false;
     }
 
     /** Ensures that this collection contains the specified element. 
@@ -42,7 +78,26 @@ public class MSet extends Object implements Collection {
         false if this collection does not permit duplicates and already contains the specified 
         element.) */
     public boolean add ( Object o ) {
-        throw new UnsupportedOperationException();
+        if (this.ifContainsUpdateNumberOfItems(o)) {
+            return true;
+        }
+
+        if (this.firstEmpty[0] != -1) {
+            this.items[this.firstEmpty[0]][this.firstEmpty[1]] = o;
+            Arrays.fill(this.firstEmpty, -1);
+            return true;
+        }
+
+        for (int column = 0; this.items[column] != null; column++) {
+            for (int row = 0; row < 1024; row++) {
+                if (this.items[column][row] == null) {
+                    this.items[column][row] = o;
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /** Adds all of the elements in the specified collection to this collection. */
@@ -55,9 +110,24 @@ public class MSet extends Object implements Collection {
         throw new UnsupportedOperationException();
     }
 
+
     /** Returns true if this collection contains the specified element. */
     public boolean contains ( Object o ) {
-        throw new UnsupportedOperationException();
+        boolean updatedEmpty = false;
+        for (int column = 0; this.items[column] != null; column++) {
+            for (int row = 0; row < 1024; row++) {
+                if (updatedEmpty == false && this.items[column][row] == null) {
+                    updateEmpty(column, row);
+                    updatedEmpty = true;
+                }
+
+                if (o.equals(this.items[column][row])) {
+                    return true;
+                } 
+            }
+        }
+
+        return false;
     }
 
 
