@@ -9,36 +9,68 @@ import java.util.Arrays;
 
 public class MSet extends Object implements Collection {
 
-    private Object[] items;
+    private Object[][] items;
 
-    private long[] numberOfItems;
+    private long[][] numberOfItems;
 
     private int numberOfUniqueItems;
 
+    private int[] firstEmpty;
+
     /** Constructs an MSet with no elements. */
     public MSet () {
-        this.items = new Object[1024];          // Inital capacty 1024 items
-        this.numberOfItems = new long[1024];
+        this.items = new Object[Integer.MAX_VALUE/1024][];
+        this.items[0] = new Object[1024];
+        this.numberOfItems = new long[Integer.MAX_VALUE/1024][];
+        this.numberOfItems[0] = new long[1024];
         this.numberOfUniqueItems = 0;
-        Arrays.fill(this.numberOfItems, 0);
+        Arrays.fill(this.numberOfItems[0], 0);
+        this.firstEmpty = new int[2];
+        Arrays.fill(this.firstEmpty, 0);
     }
 
     /** Constructs an MSet from the given collection. */
     public MSet ( Collection c ) {
-        this.items = new Object[1024];          // Inital capacty 1024 items
-        this.numberOfItems = new long[1024];
+        this.items = new Object[Integer.MAX_VALUE/1024][];
+        this.items[0] = new Object[1024];
+        this.numberOfItems = new long[Integer.MAX_VALUE/1024][];
+        this.numberOfItems[0] = new long[1024];
         this.numberOfUniqueItems = 0;
-        Arrays.fill(this.numberOfItems, 0);
+        Arrays.fill(this.numberOfItems[0], 0);
+        this.firstEmpty = new int[2];
+        Arrays.fill(this.firstEmpty, -1);
 
         this.addAll(c);
     }
 
-    /** Grows the current MSet to the specified size */
-    private void embiggen (int newSize) {
-        this.items = Arrays.copyOf(this.items, newSize);
-        this.numberOfItems = Arrays.copyOf(this.numberOfItems, newSize);
+    /** Private custom methods */
+    private void updateEmpty (int column, int row) {
+        if (this.firstEmpty[0] == -1) {
+            this.firstEmpty[0] = column;
+            this.firstEmpty[1] = row;
+        } else if (column < this.firstEmpty[0] || (this.firstEmpty[0] == column && row < this.firstEmpty[0])) {
+            this.firstEmpty[0] = column;
+            this.firstEmpty[1] = row;
+        }
+    }
 
-        System.gc();        // Embiggen will orphan large arrays, want them cleaned.
+    private boolean ifContainsUpdateNumberOfItems (Object o) {
+        boolean updatedEmpty = false;
+        for (int column = 0; this.items[column] != null; column++) {
+            for (int row = 0; row < 1024; row++) {
+                if (updatedEmpty == false && this.items[column][row] == null) {
+                    updateEmpty(column, row);
+                    updatedEmpty = true;
+                }
+
+                if (o.equals(this.items[column][row])) {
+                    this.numberOfItems[column][row]++;
+                    return true;
+                } 
+            }
+        }
+
+        return false;
     }
 
     /** Ensures that this collection contains the specified element. 
@@ -46,37 +78,22 @@ public class MSet extends Object implements Collection {
         false if this collection does not permit duplicates and already contains the specified 
         element.) */
     public boolean add ( Object o ) {
-        if (this.containsAndAdd(o)) {                                   // If the item is in the MSet, it will be added by this method
+        if (this.ifContainsUpdateNumberOfItems(o)) {
             return true;
         }
 
-        if (numberOfUniqueItems == this.items.length + 1) {             // Better make sure we have space.
-            if (this.numberOfUniqueItems * 2 < Integer.MAX_VALUE) { 
-                this.embiggen(this.numberOfUniqueItems * 2);
-            } else {
-                return false;                                           // Return false if we can't add it. TODO: Should we throw an exception?
-            }
+        if (this.firstEmpty[0] != -1) {
+            this.items[this.firstEmpty[0]][this.firstEmpty[1]] = o;
+            Arrays.fill(this.firstEmpty, -1);
+            return true;
         }
 
-        for (int i = 0; i < this.items.length; i++) {                   // At this point, we know the MSet does not contain the item, it needs to be added.
-            if (this.items[i] == null) {
-                this.items[i] = o;
-                this.numberOfItems[i] += 1;
-                return true;
-            }
-        }
-
-        return false;                                                   // This should never happen, but the complier complains if it is removed.
-    }
-
-    /** Checks to see if the MSet contains the specified item. If it does,
-        this will return true and increment the number of the item by 1. If this
-        MSet does not conten the object, returns false*/
-    private boolean containsAndAdd ( Object o ) {
-        for (int i = 0; i < this.items.length; i++) {
-            if (o == this.items[i]) {
-                this.numberOfItems[i]++;
-                return true;
+        for (int column = 0; this.items[column] != null; column++) {
+            for (int row = 0; row < 1024; row++) {
+                if (this.items[column][row] == null) {
+                    this.items[column][row] = o;
+                    return true;
+                }
             }
         }
 
@@ -85,25 +102,32 @@ public class MSet extends Object implements Collection {
 
     /** Adds all of the elements in the specified collection to this collection. */
     public boolean addAll ( Collection c ) {
-        for (Object o : c) {
-            this.add(o);
-        }
-
-        return true;
+        throw new UnsupportedOperationException();
     }
 
     /** Removes all of the elements from this collection. */
     public void clear () {
-        this.items = new Object[1024];          // Just make a new MSet
-        this.numberOfItems = new long[1024];
-        this.numberOfUniqueItems = 0;
-        Arrays.fill(this.numberOfItems, 0);
-        System.gc();                            // Hopefully clean up all the orphaned items.
+        throw new UnsupportedOperationException();
     }
+
 
     /** Returns true if this collection contains the specified element. */
     public boolean contains ( Object o ) {
-        throw new UnsupportedOperationException();
+        boolean updatedEmpty = false;
+        for (int column = 0; this.items[column] != null; column++) {
+            for (int row = 0; row < 1024; row++) {
+                if (updatedEmpty == false && this.items[column][row] == null) {
+                    updateEmpty(column, row);
+                    updatedEmpty = true;
+                }
+
+                if (o.equals(this.items[column][row])) {
+                    return true;
+                } 
+            }
+        }
+
+        return false;
     }
 
 
@@ -119,16 +143,26 @@ public class MSet extends Object implements Collection {
 
     /** Returns a hash code value for this collection. May override Object.hashCode(). */
     public int hashCode () {            // Needs moar comments
+        boolean updatedEmpty = false;
         long combinedHash = 0;
         
-        for (int i = 0; i < numberOfUniqueItems; i++) {
-            String tempHash = this.items[i].hashCode() + this.numberOfItems[i] + "";
-            combinedHash += tempHash.hashCode();
+        for (int column = 0; this.items[column] != null; column++) {
+            for (int row = 0; row < 1024; row++) {
+                if (updatedEmpty == false && this.items[column][row] == null) {
+                    updateEmpty(column, row);
+                    updatedEmpty = true;
+                } else if (this.items[column][row] != null) {
+                    String tempHash = this.items[column][row].hashCode() + this.numberOfItems[column][row] + "";
+                    combinedHash += Long.parseLong(tempHash);
+                }
+            }
         }
 
-        String hash = combinedHash + "";
+        while (combinedHash >= Integer.MAX_VALUE) {
+            combinedHash /= 25964951;
+        }
 
-        return hash.hashCode();
+        return (int)combinedHash;
     }
 
     /** Returns true if this collection contains no elements. */
@@ -142,8 +176,7 @@ public class MSet extends Object implements Collection {
         throw new UnsupportedOperationException();
     }
 
-    /** Removes a single instance of the specified element from this collection, if it is present.
-        Returns true if the collection changes as a result of this operation.*/
+    /** Removes a single instance of the specified element from this collection, if it is present. */
     public boolean remove ( Object o ) {
         throw new UnsupportedOperationException();
     }
