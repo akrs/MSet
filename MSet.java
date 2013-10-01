@@ -17,40 +17,96 @@ public class MSet extends Object implements Collection {
 
     private int[] firstEmpty;
 
+    private int rowLength = 1024;
+
     public static void main(String[] args) {
         MSet y = new MSet();
 
         MSet x = new MSet();
 
-        for (long i = 0; i < 100; i++) {
-            y.add(Long.valueOf(i));
-        }
+        // for (long i = 0; i < 100; i++) {
+        //     y.add(Long.valueOf(i));
+        // }
 
-        for (long i = 0; i < 1000; i++) {
-            y.add(Long.valueOf(i));
+        // for (long i = 0; i < 1000; i++) {
+        //     y.add(Long.valueOf(i));
+        // }
+
+        // System.out.println(y);
+
+        // for (long i = 0; i < 100; i++) {
+        //     x.add(Long.valueOf(i));
+        // }
+
+        // for (long i = 0; i < 1000; i++) {
+        //     x.add(Long.valueOf(i));
+        // }
+
+        // System.out.println(x.equals(y));
+
+        // for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            
+        //     x.add("cat" + (i % 10000));
+        //     System.out.println(i);
+            
+        // }
+        // System.out.println(x.numberOfItems[0][0]);
+        // System.out.println(x);
+
+        x.add("cat");
+        x.add("cat");
+        x.add("cat");
+        x.add("dog");
+        x.add("dog");
+        System.out.println(x);
+        System.out.println(x.numberOfUniqueItems);
+        System.out.println(x.hashCode());
+        System.out.println();
+
+        y.add("dog");
+        y.add("dog");
+        y.add("horse");
+        y.add("cat");
+        y.add("cat");
+        y.add("cat");
+        System.out.println(y);
+        System.out.println(y.numberOfUniqueItems);
+        System.out.println(y.hashCode());
+        System.out.println();
+        System.out.println(x.equals(y));
+        System.out.println();
+        y.remove("horse");
+        System.out.println(y);
+        System.out.println(x.equals(y));
+
+        y.add("platapus");
+        System.out.println(y);
+
+        y.retainAll(x);
+        System.out.println(x.equals(y));
+
+        System.out.println();
+
+        Iterator it = y.iterator();
+        while (it.hasNext()) {
+            System.out.println(it.next());
+            it.remove();
         }
 
         System.out.println(y);
 
-        for (long i = 0; i < 100; i++) {
-            x.add(Long.valueOf(i));
-        }
+        y.addAll(x);
 
-        for (long i = 0; i < 1000; i++) {
-            x.add(Long.valueOf(i));
-        }
-
-        System.out.println(x.equals(y));
-
+        System.out.println(y);
 
     }
 
     /** Constructs an MSet with no elements. */
     public MSet () {
-        this.items = new Object[Integer.MAX_VALUE/1024][];
-        this.items[0] = new Object[1024];
-        this.numberOfItems = new long[Integer.MAX_VALUE/1024][];
-        this.numberOfItems[0] = new long[1024];
+        this.items = new Object[Integer.MAX_VALUE/rowLength][];
+        this.items[0] = new Object[rowLength];
+        this.numberOfItems = new long[Integer.MAX_VALUE/rowLength][];
+        this.numberOfItems[0] = new long[rowLength];
         this.numberOfUniqueItems = 0;
         Arrays.fill(this.numberOfItems[0], 0);
         this.firstEmpty = new int[2];
@@ -59,10 +115,10 @@ public class MSet extends Object implements Collection {
 
     /** Constructs an MSet from the given collection. */
     public MSet ( Collection c ) {
-        this.items = new Object[Integer.MAX_VALUE/1024][];
-        this.items[0] = new Object[1024];
-        this.numberOfItems = new long[Integer.MAX_VALUE/1024][];
-        this.numberOfItems[0] = new long[1024];
+        this.items = new Object[Integer.MAX_VALUE/rowLength][];
+        this.items[0] = new Object[rowLength];
+        this.numberOfItems = new long[Integer.MAX_VALUE/rowLength][];
+        this.numberOfItems[0] = new long[rowLength];
         this.numberOfUniqueItems = 0;
         Arrays.fill(this.numberOfItems[0], 0);
         this.firstEmpty = new int[2];
@@ -72,6 +128,18 @@ public class MSet extends Object implements Collection {
     }
 
     /** Private custom methods */
+    private int[] indexOf (Object o) {
+        for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
+            for (int row = 0; row < rowLength; row++) {
+                if (this.items[column][row] != null && o.equals(this.items[column][row])) {
+                    return new int[]{column, row};
+                }
+            }
+        }
+
+        return new int[]{-1, -1};
+    }
+
     private void updateEmpty (int column, int row) {
         if (this.firstEmpty[0] == -1) {
             this.firstEmpty[0] = column;
@@ -83,21 +151,13 @@ public class MSet extends Object implements Collection {
     }
 
     private boolean containsAndMaybeAdds (Object o, boolean add) {
-        boolean updatedEmpty = false;
-        for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                }
+        int[] x = this.indexOf(o);
 
-                if (o.equals(this.items[column][row])) {
-                    if (add) {
-                        this.numberOfItems[column][row]++;
-                    }
-                    return true;
-                }
+        if (x[0] != -1) {
+            if (add) {
+                this.numberOfItems[x[0]][x[1]]++;
             }
+            return true;
         }
 
         return false;
@@ -109,6 +169,10 @@ public class MSet extends Object implements Collection {
         false if this collection does not permit duplicates and already contains the specified 
         element.) */
     public boolean add ( Object o ) {
+        if (o == null) {
+            throw new NullPointerException("This collection does not allow null objects.");
+        }
+
         if (this.containsAndMaybeAdds(o, true)) {
             return true;
         }
@@ -116,17 +180,18 @@ public class MSet extends Object implements Collection {
         if (this.firstEmpty[0] != -1) {
             this.items[this.firstEmpty[0]][this.firstEmpty[1]] = o;
             this.numberOfItems[this.firstEmpty[0]][this.firstEmpty[1]] += 1;
+            this.numberOfUniqueItems++;
             Arrays.fill(this.firstEmpty, -1);
             return true;
         }
 
         int column = 0;
         while (column < this.items.length && this.items[column] != null) {
-            for (int row = 0; row < 1024; row++) {
+            for (int row = 0; row < rowLength; row++) {
                 if (this.items[column][row] == null) {
                     this.items[column][row] = o;
                     this.numberOfItems[column][row]++;
-                    numberOfUniqueItems++;
+                    this.numberOfUniqueItems++;
                     return true;
                 }
             }
@@ -134,9 +199,12 @@ public class MSet extends Object implements Collection {
         }
 
         try {
-            this.items[column] = new Object[1024];
+            this.items[column] = new Object[rowLength];
             this.items[column][0] = o;
-            numberOfUniqueItems++;
+            this.numberOfItems[column] = new long[rowLength];
+            Arrays.fill(this.numberOfItems[column], 0);
+            this.numberOfItems[column][0] = 1;
+            this.numberOfUniqueItems++;
             return true;
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new UnsupportedOperationException("Collection too large. Go fuck yourself.");
@@ -154,10 +222,10 @@ public class MSet extends Object implements Collection {
 
     /** Removes all of the elements from this collection. */
     public void clear () {
-        this.items = new Object[Integer.MAX_VALUE/1024][];
-        this.items[0] = new Object[1024];
-        this.numberOfItems = new long[Integer.MAX_VALUE/1024][];
-        this.numberOfItems[0] = new long[1024];
+        this.items = new Object[Integer.MAX_VALUE/rowLength][];
+        this.items[0] = new Object[rowLength];
+        this.numberOfItems = new long[Integer.MAX_VALUE/rowLength][];
+        this.numberOfItems[0] = new long[rowLength];
         this.numberOfUniqueItems = 0;
         Arrays.fill(this.numberOfItems[0], 0);
         this.firstEmpty = new int[2];
@@ -186,25 +254,55 @@ public class MSet extends Object implements Collection {
 
     /** Returns the number of copies of Object o in this MSet. */
     public int count ( Object o ) {
-        throw new UnsupportedOperationException();
+        int[] x = this.indexOf(o);
+
+        if (x[0] != -1) {
+            return (int)this.numberOfItems[x[0]][x[1]];
+        }
+
+        return 0;
     }
 
     /** Compares the specified object with this collection for equality. Overrides Object.equals(). */
     public boolean equals ( Object o ) {
-        throw new UnsupportedOperationException();
+        if (!(o instanceof MSet) ||
+            this.numberOfUniqueItems != ((MSet)o).numberOfUniqueItems) {
+            return false;
+        }
+
+        for (int tColumn = 0; tColumn < this.items.length && this.items[tColumn] != null; tColumn++) {
+            nextItem:
+            for (int tRow = 0; tRow < this.rowLength; tRow++) {
+                if (this.items[tColumn][tRow] != null) {
+                    for (int oColumn = 0; oColumn < ((MSet)o).items.length && ((MSet)o).items[oColumn] != null; oColumn++) {
+                        for (int oRow = 0; oRow < ((MSet)o).rowLength; oRow++) {
+                            if (((MSet)o).items[oColumn][oRow] != null &&
+                                this.items[tColumn][tRow].equals(((MSet)o).items[oColumn][oRow])) {
+                                
+                                if (this.numberOfItems[tColumn][tRow] == ((MSet)o).numberOfItems[oColumn][oRow]) {
+                                    continue nextItem;
+                                } else {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /** Returns a hash code value for this collection. May override Object.hashCode(). */
     public int hashCode () {            // Needs moar comments
-        boolean updatedEmpty = false;
         long combinedHash = 0;
         
         for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                } else if (this.items[column][row] != null) {
+            for (int row = 0; row < rowLength; row++) {
+                if (this.items[column][row] != null) {
                     String tempHash = this.items[column][row].hashCode() + this.numberOfItems[column][row] + "";
                     combinedHash += Long.parseLong(tempHash);
                 }
@@ -221,7 +319,7 @@ public class MSet extends Object implements Collection {
     /** Returns true if this collection contains no elements. */
     public boolean isEmpty () {
         for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
+            for (int row = 0; row < rowLength; row++) {
                 if (this.items[column][row] != null) {
                     return false;
                 }
@@ -234,26 +332,21 @@ public class MSet extends Object implements Collection {
     /** Returns an iterator over the elements in this collection. 
         There are no guarantees concerning the order in which the elements are returned. */
     public Iterator iterator () {
-        throw new UnsupportedOperationException();
+        return new SpecIterator(this);
     }
 
     /** Removes a single instance of the specified element from this collection, if it is present. */
     public boolean remove ( Object o ) {
-        boolean updatedEmpty = false;
-        for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                }
+        int[] x = this.indexOf(o);
+        if (x[0] != -1) {
+            this.items[x[0]][x[1]] = null;
+            this.numberOfItems[x[0]][x[1]] = 0;
+            this.numberOfUniqueItems--;
 
-                if (o.equals(this.items[column][row])) {
-                    this.items[column][row] = null;
-                    this.numberOfItems[column][row] = 0;
-                    numberOfUniqueItems--;
-                    return true;
-                }
+            if ((this.firstEmpty[0] > x[0]) || (this.firstEmpty[0] == x[0] && this.firstEmpty[1] > x[1])) {
+                this.firstEmpty = x;
             }
+            return true;
         }
 
         return false;
@@ -263,24 +356,15 @@ public class MSet extends Object implements Collection {
     /** Decrements the number of copies of o in this MSet. Returns true iff this MSet changed
     as a result of the operation. */
     public boolean reduce ( Object o ) {
-        boolean updatedEmpty = false;
-        for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                }
-
-                if (o.equals(this.items[column][row])) {
-                    this.numberOfItems[column][row]--;
-                    if (this.numberOfItems[column][row] == 0) {
-                        this.items[column][row] = null;
-                        numberOfUniqueItems--;
-                    }
-                    
-                    return true;
-                }
+        int[] x = this.indexOf(o);
+        if (x[0] != -1) {
+            this.numberOfItems[x[0]][x[1]]--;
+            if (this.numberOfItems[x[0]][x[1]] == 0) {
+                this.items[x[0]][x[1]] = null;
+                this.numberOfUniqueItems--;
             }
+            
+            return true;
         }
 
         return false;
@@ -303,19 +387,13 @@ public class MSet extends Object implements Collection {
          In other words, removes from this collection all of its elements that are not contained in the 
          specified collection. */
     public boolean retainAll ( Collection c ) {
-        boolean updatedEmpty = false;
         boolean changed = false;
         for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                }
-
-                if (!c.contains(this.items[column][row])) {
+            for (int row = 0; row < rowLength; row++) {
+                if (this.items[column][row] != null && !c.contains(this.items[column][row])) {
                     this.items[column][row] = null;
                     this.numberOfItems[column][row] = 0;
-                    numberOfUniqueItems--;
+                    this.numberOfUniqueItems--;
                     changed = true;
                 }
             }
@@ -327,21 +405,11 @@ public class MSet extends Object implements Collection {
     /** Returns the number of elements in this collection, including duplicates. 
         If this collection contains more than Integer.MAX_VALUE elements, returns Integer.MAX_VALUE. */
     public int size () {
-        boolean updatedEmpty = false;
         long totalItems = 0;
-        for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                }
-
+        for (int column = 0; column < this.numberOfItems.length && this.numberOfItems[column] != null; column++) {
+            for (int row = 0; row < rowLength; row++) {
                 totalItems += this.numberOfItems[column][row];
             }
-        }
-
-        if (totalItems > Integer.MAX_VALUE) {
-            totalItems = Integer.MAX_VALUE;
         }
 
         return (int)totalItems;
@@ -350,7 +418,7 @@ public class MSet extends Object implements Collection {
     /** Returns the number of UNIQUE elements in this collection (i.e., not including duplicates). 
     If this collection contains more than Integer.MAX_VALUE elements, returns Integer.MAX_VALUE. */
     public int unique () {
-        return numberOfUniqueItems;
+        return this.numberOfUniqueItems;
     }
 
     /** Returns an array containing all of the UNIQUE elements in this collection. */
@@ -358,13 +426,8 @@ public class MSet extends Object implements Collection {
         Object[] x = new Object[numberOfUniqueItems];
         int i = 0;
 
-        boolean updatedEmpty = false;
         for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                }
+            for (int row = 0; row < rowLength; row++) {
 
                 if (this.items[column][row] != null) {
                     x[i] = this.items[column][row];
@@ -397,14 +460,8 @@ public class MSet extends Object implements Collection {
     public String toString () {
         String result = "";
 
-        boolean updatedEmpty = false;
         for (int column = 0; column < this.items.length && this.items[column] != null; column++) {
-            for (int row = 0; row < 1024; row++) {
-                if (updatedEmpty == false && this.items[column][row] == null) {
-                    updateEmpty(column, row);
-                    updatedEmpty = true;
-                }
-
+            for (int row = 0; row < rowLength; row++) {
                 if (this.items[column][row] != null) {
                     result += "{" + this.items[column][row].toString() + ", " + this.numberOfItems[column][row] + "}";
                 }
@@ -414,4 +471,39 @@ public class MSet extends Object implements Collection {
         return result;
     }
     
+    private class SpecIterator implements Iterator {
+        private MSet m;
+        private int i;
+
+        public SpecIterator (MSet m) {
+            this.m = m;
+            i = -1;
+        }
+
+        public Object next () {
+            i++;
+            while (m.items[i/rowLength][i%rowLength] == null) {
+                i++;
+            }
+
+            return m.items[i/rowLength][i%rowLength];
+        }
+
+        public boolean hasNext() {
+            int j = i + 1;
+            while (m.items[j/rowLength] != null) {
+                if (m.items[j/rowLength][j%rowLength] != null) {
+                    return true;
+                } else {
+                    j++;
+                }
+            }
+
+            return false;
+        }
+
+        public void remove () {
+            m.remove(m.items[i/rowLength][i%rowLength]);
+        }
+    }
 }
