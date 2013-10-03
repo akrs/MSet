@@ -1,6 +1,7 @@
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.ArrayList;
 
 /**
 	An MSet is an unordered collection that allows duplicates. This class should be 
@@ -23,11 +24,39 @@ public class MSet extends Object implements Collection {
     	m.add("rabbit");
     	m.add("platapus");
     	m.add("cat");
-    	System.out.println("Cat: " + m.count("cat"));
-    	System.out.println(m.toString());
+    	System.out.println(m.size());
+    	System.out.println("Uniqe: " + m.unique());
+    	m.reduce("cat");
+    	System.out.println("Uniqe: " + m.unique());
+    	System.out.println(m.size());
     	m.clear();
-    	System.out.println(m.toString());
+    	System.out.println("Uniqe: " + m.unique());
+    	System.out.println(m.size());
+    	// System.out.println("Cat: " + m.count("cat"));
+    	// System.out.println(m.toString());
+    	// m.clear();
+    	// System.out.println(m.toString());
 
+    	// ArrayList<String> list = new ArrayList<String>();
+    	// list.add("A");
+    	// list.add("B");
+    	// list.add("C");
+    	// list.add("D");
+    	// m.addAll(list);
+    	// System.out.println(m.toString());
+
+    	// ArrayList<String> list2 = new ArrayList<String>();
+    	// list2.add("A");
+    	// list2.add("D");
+    	// list2.add("C");
+    	// System.out.println(list.contains("A"));
+    	// System.out.println(list2.contains("A"));
+
+    	// m.retainAll(list2);
+    	// System.out.println(m.toString());
+
+    	// m.clear();
+    	// System.out.println("Empty: " + m.isEmpty());
     	
     }
 
