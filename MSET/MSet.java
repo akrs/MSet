@@ -50,6 +50,15 @@ public class MSet extends Object implements Collection {
     	private boolean equals ( Element e ) {
     		return this.count == e.count && this.object.equals(e.object);
     	}
+
+    	public int hashCode () {
+    		long tempHash = Long.parseLong(this.object.hashCode() + this.count + "");
+    		if (tempHash > Integer.MAX_VALUE) {
+    			tempHash /= 25964951;
+    		}
+
+    		return (int)tempHash;
+    	}
     }
 
     private class ObjIterator implements Iterator {
@@ -70,6 +79,32 @@ public class MSet extends Object implements Collection {
     		return i <  m.numberOfUniqueItems;
     	}
 
+    	public void remove () {
+    		m.setObjectLocation(i / 1024, i % 1024);
+    		m.remove();
+    	}
+
+    }
+
+	private class EleIterator implements Iterator {
+    	private MSet m;
+    	private int i;
+
+    	public EleIterator (MSet m) {
+    		this.m = m;
+    		this.i = -1;
+    	}
+
+    	public Element next () {
+    		i++;
+    		return m.items[i / m.rowLength][i % m.rowLength];
+    	}
+
+    	public boolean hasNext () {
+    		return i <  m.numberOfUniqueItems;
+    	}
+
+    	public void remove () {}
     }
 
     private void setObjectLocation (int column, int row) {
@@ -92,33 +127,12 @@ public class MSet extends Object implements Collection {
 		return -1;
 	}
 
-    // Only ever move the first empty row element by 1. This will determine how the column
-    // element reacts
-    /*
-    private void updateFirstEmpty (int moveBy) {
-    	int newRow = this.firstEmpty[1] + moveBy;
-    	this.currentArrayFull = false;
-
-    	// If current row array is full, set it up so that the first empty will be ready after 
-    	// new array is created
-    	if (newRow == 1024) {
-    		this.firstEmpty[0] = this.firstEmpty[0] + 1;
-    		this.firstEmpty[1] = 0;
-    		this.currentArrayFull = true;
-    	} else if (newRow < 0) {
-    		// If firstEmpty row goes less than 0 check to see if column == 0
-    		// If yes: set first empty to (0, 0), else set column -= 1, row = 1023
-    		if (this.firstEmpty[0] == 0) {
-    			this.firstEmpty[0] = 0;
-    			this.firstEmpty[1] = 0;
-    		} else {
-    			this.firstEmpty[0] -= 1;
-    			this.firstEmpty[1] = 1023;
-    		}
-    	} else {
-    		this.firstEmpty[1] = row;
-    	}
-    } **/
+	/** Called when we want to remove the object at objectLocation */
+	private void remove () {
+		this.items[this.objectLocation[0]][this.objectLocation[1]] = null;
+		this.numberOfUniqueItems--;
+		this.moveLastIntoEmpty();
+	}
 
 ///// PUBLIC METHODS /////
 	/** Constructs an MSet with no elements. */
@@ -216,13 +230,13 @@ public class MSet extends Object implements Collection {
         }
         MSet m = (MSet)o;
 
-        for (int i = 0; i < numberOfUniqueItems; i++) {
-        	for (int j = 0; j < numberOfUniqueItems; j++) {
-        		if (this.items[i / rowLength][i % rowLength].equals(m.items[j / rowLength][j % rowLength])) {
-        			
-        		}
+        for (EleIterator i = new EleIterator(this); i.hasNext(); ) {
+        	Element e = i.next();
+        	int check = m.indexOf(e.object);
+        	if (check < 0 ||
+        		!e.equals(m.items[check / m.rowLength][check % m.rowLength])) {
+        		return false;
         	}
-        	return false;
         }
 
         return true;
@@ -230,18 +244,29 @@ public class MSet extends Object implements Collection {
 
  	/** Returns a hash code value for this collection. May override Object.hashCode(). */
 	public int hashCode () {
-		throw new UnsupportedOperationException();
+		long combinedHash = 0;
+
+		for (EleIterator i = new EleIterator(this); i.hasNext(); ) {
+			Element e = i.next();
+			combinedHash += e.hashCode();
+		}
+
+		if (combinedHash > Integer.MAX_VALUE) {
+			combinedHash /= 25964951;
+		}
+
+		return (int)combinedHash;
 	}
 
 	/** Returns true if this collection contains no elements. */
 	public boolean isEmpty () {
-		throw new UnsupportedOperationException();
+		return this.numberOfUniqueItems == 0;
 	}
 
 	/** Returns an iterator over the UNIQUE elements in this collection. There are no 
 		guarantees concerning the order in which the elements are returned. */
 	public Iterator iterator () {
-		throw new UnsupportedOperationException();
+		return new ObjIterator(this);
 	}
 
 	/** [REVISED] Removes all instances of the specified element from this collection. */
@@ -252,12 +277,6 @@ public class MSet extends Object implements Collection {
 		} else {
 			return false;
 		}
-	}
-	/** Called when we want to remove the object at objectLocation */
-	private void remove () {
-		this.items[this.objectLocation[0]][this.objectLocation[1]] = null;
-		this.numberOfUniqueItems--;
-		this.moveLastIntoEmpty();
 	}
 
 	/** Removes all of this collection's elements that are also contained in the specified collection. 
