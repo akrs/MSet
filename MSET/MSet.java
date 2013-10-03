@@ -15,11 +15,7 @@ public class MSet extends Object implements Collection {
 	private Element[][] items;
     private int numberOfUniqueItems;
     private int[] objectLocation;
-    private boolean currentArrayFull;
     private int rowLength = 1024;
-    
-///// CONCERNS /////
-    // 1) searching this.contains(null) might return a column position that is null? Possibly not, it's late
 
     public static void main(String[] args) {
     	MSet m = new MSet();
@@ -27,11 +23,14 @@ public class MSet extends Object implements Collection {
     	m.add("rabbit");
     	m.add("platapus");
     	m.add("cat");
+    	System.out.println("Cat: " + m.count("cat"));
+    	System.out.println(m.toString());
+    	m.clear();
     	System.out.println(m.toString());
 
-    	m.remove("cat");
-    	System.out.println(m.toString());
+    	
     }
+
 ///// PRIVATE METHODS /////
     private class Element {
     	
@@ -141,7 +140,6 @@ public class MSet extends Object implements Collection {
 		this.items[0] = new Element[rowLength];
 		this.objectLocation = new int[2];
 		this.numberOfUniqueItems = 0;
-		this.currentArrayFull = false;
 	}
 
 	/** Constructs an MSet from the given collection. */
@@ -150,7 +148,6 @@ public class MSet extends Object implements Collection {
 		this.items[0] = new Element[rowLength];
 		this.objectLocation = new int[2];
 		this.numberOfUniqueItems = 0;
-		this.currentArrayFull = false; 
 
 		this.addAll(c);
 	}
@@ -193,7 +190,10 @@ public class MSet extends Object implements Collection {
 
 	/** Removes all of the elements from this collection. */
 	public void clear () {
-		throw new UnsupportedOperationException();
+		this.items = new Element[Integer.MAX_VALUE / rowLength][];
+		this.items[0] = new Element[rowLength];
+		this.objectLocation = new int[2];
+		this.numberOfUniqueItems = 0;
 	}
 
 	/** Returns true if this collection contains the specified element. */
@@ -217,8 +217,9 @@ public class MSet extends Object implements Collection {
 	public int count ( Object o ) {
 		if (this.contains(o)) {
 			return (int)this.items[this.objectLocation[0]][this.objectLocation[1]].count;
+		} else {
+			return 0;
 		}
-		throw new UnsupportedOperationException();
 	}
 
 	/** Compares the specified object with this collection for equality. Overrides Object.equals(). */
@@ -338,7 +339,7 @@ public class MSet extends Object implements Collection {
 	}
 
 
-	/** [ADDED] Decrements the number of copies of o in this MSet. Returns true iff this MSet changed
+	/** [ADDED] Decrements the number of copies of o in this MSet. Returns true if this MSet changed
 		as a result of the operation. */
 	public boolean reduce ( Object o ) {
 		if (this.contains(o)) {
@@ -369,6 +370,7 @@ public class MSet extends Object implements Collection {
 	public String toString () {
 		String result = "";
 		for (int i = 0; i < numberOfUniqueItems; i++) {
+			System.out.println(i);
 			result += this.items[i / 1024][i % 1024].toString();
 		}
 		return result;
