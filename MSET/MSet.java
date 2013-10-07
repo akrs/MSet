@@ -334,7 +334,6 @@ public class MSet extends Object implements Collection {
     public String toString () {
         String result = "";
         for (int i = 0; i < numberOfUniqueItems; i++) {
-            System.out.println(i);
             result += this.items[i / rowLength][i % rowLength].toString();
         }
         return result;
