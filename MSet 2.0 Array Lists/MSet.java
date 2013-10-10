@@ -4,29 +4,6 @@ import java.util.Iterator;
 
 public class MSet extends ArrayList {
 
-	public static void main(String[] args) {
-		MSet m = new MSet();
-		System.out.println(m.add("hi"));
-		System.out.println(m.add("hi"));
-		System.out.println(m.toString());
-		System.out.println(m.count("hi"));
-
-		System.out.println(java.util.Arrays.toString(m.toArray()));
-		System.out.println(m.toArray());
-
-		System.out.println(m.remove("hi"));
-		System.out.println(m.toString());
-		System.out.println(m.count("hi"));
-
-		// System.out.println(m.reduce("hi"));
-		// System.out.println(m.toString());
-		// System.out.println(m.count("hi"));
-
-		// System.out.println(m.reduce("hi"));
-		// System.out.println(m.toString());
-		// System.out.println(m.count("hi"));
-	}
-
 	/** Constructs an MSet with no elements. */
 	public MSet () {
 		
