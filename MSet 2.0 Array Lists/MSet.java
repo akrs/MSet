@@ -158,7 +158,7 @@ public class MSet extends ArrayList {
 
 		public Object next () {
 			this.position++;
-			if (this.postion < m.size() && !uniques.contains(m.get(this.position))) {
+			if (this.position < m.size() && !uniques.contains(m.get(this.position))) {
 				uniques.add(m.get(this.position));
 				return m.get(this.position);
 			} else {
